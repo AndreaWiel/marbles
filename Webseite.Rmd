@@ -1,0 +1,148 @@
+---
+title: "Marble Races"
+author: "Susanna Formanns & Andrea Wiel"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::material:
+    code_folding: hide
+    highlight: kate
+    
+---
+
+
+```{r setup, echo=FALSE, cache=FALSE}
+## Global options
+options(max.print="75")
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE,
+	comment = NA,
+	prompt = FALSE,
+	tidy = TRUE
+)
+library(knitr)
+library(rmdformats)
+library(rmdformats)
+library(tidyverse)
+library(tidytext)
+library(skimr)
+library(magrittr)
+
+
+opts_knit$set(width=75)
+
+```
+
+```{r setup2}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	cache = FALSE
+)
+# Get the Data
+
+marbles <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-06-02/marbles.csv')
+
+# Or read in with tidytuesdayR package (https://github.com/thebioengineer/tidytuesdayR)
+
+# Either ISO-8601 date or year/week works!
+
+# Install via devtools::install_github("thebioengineer/tidytuesdayR")
+
+tuesdata <- tidytuesdayR::tt_load('2020-06-02')
+tuesdata <- tidytuesdayR::tt_load(2020, week = 23)
+
+
+marbles <- tuesdata$marbles
+```
+
+
+```{r data cleaning, echo=FALSE, message=FALSE, warning=FALSE}
+#library(tidyverse)
+#library(skimr)
+#library(janitor)
+
+
+#marbles <- read_csv("marbles.csv") %>% 
+ #janitor::clean_names() %>% 
+  #select(-host)
+
+#skimr::skim(marbles)
+
+#marbles %>% 
+ # write_csv("marbles.csv")
+
+```
+# Einleitung
+Die Daten stammen aus dem TidyTuesday Datensatz vom 06.02.2020. Es wurden die Namen der Murmeln und der Teams, die Durchschnittszeiten pro Runde, die Punkte oder die Streckenlänge gesammelt. 
+Die Punkte hängen nicht nur davon ab, wie schnell eine Murmel die Strecke zurückgelegt hat.
+
+Quelle: [Tidy Tuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-06-02/marbles.csv)
+
+# Daten
+
+
+In Summe wurden r track_length_m %>% count() %>% pull(n) von den Murmeln zurückgelegt.
+Die Teams mit den meisten Punkten sind:
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+
+  sum_df <- marbles %>%
+filter(!is.na(points)) %>%
+group_by(team_name, time_s, track_length_m, number_laps, avg_time_lap) %>%
+summarise(points = sum(points), na.rm = T)
+
+  
+#sum_df %>%
+  #mutate(port_origin = fct_lump(factor(team_name), prop = 0.5)) %>%
+  #pull(team_name)
+
+sum_df %>% group_by(team_name) %>%
+  summarise(points = sum(points)) %>%
+  arrange(desc(points)) %>%
+  top_n(5) %>%
+  pull(team_name) %>%
+  na.omit() -> top_team_names
+
+top_team_names %>% 
+  #select(x = "Teams") %>% 
+  kable()
+  
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+sum_df %>%
+mutate(team_name = ifelse(team_name %in% 
+                            top_team_names, team_name, "other")) %>%
+ggplot() +
+  aes(x = avg_time_lap) +
+  aes(y = points) +
+  aes(fill = team_name) +
+  geom_col() +
+ # guides(fill =FALSE) #Legende wird nicht angezeigt
+  scale_fill_discrete() +
+  theme(legend.position = "bottom") +
+  labs(fill = "Teamname",
+    title = "Punkteverteilung nach Team und Zeit", 
+       subtitle = "",
+       x = "Durchschnittszeit pro Runde in Sekunden", 
+       y = "Punkte") +
+  theme(plot.title = element_text(hjust=0.5, size = 15), 
+        title = element_text(size = 10)) +
+  theme(plot.subtitle = element_text(hjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 10)) +
+  theme(axis.text.y = element_text(size = 10)) +
+   theme(strip.text.x = element_text(size = 10),
+         strip.text.y = element_text(size = 10)) +
+   scale_x_continuous(breaks=c(0:45)) +
+  scale_y_continuous(breaks=c(0, 5, 10, 15, 20, 25, 30, 35, 40, 45)) -> p
+
+library(plotly)
+
+ggplotly(p)
+
+```
+  
