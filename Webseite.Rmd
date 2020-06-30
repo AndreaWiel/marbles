@@ -4,13 +4,15 @@ author: "Susanna Formanns & Andrea Wiel"
 date: "`r Sys.Date()`"
 output:
   rmdformats::material:
-    code_folding: hide
     highlight: kate
     
 ---
 
 
 ```{r setup, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
 ## Global options
 options(max.print="75")
 knitr::opts_chunk$set(
@@ -22,61 +24,25 @@ knitr::opts_chunk$set(
 	prompt = FALSE,
 	tidy = TRUE
 )
-library(knitr)
-library(rmdformats)
-library(rmdformats)
-library(tidyverse)
-library(tidytext)
-library(skimr)
-library(magrittr)
-
-
 opts_knit$set(width=75)
 
 ```
 
-```{r setup2}
-knitr::opts_chunk$set(
-	echo = FALSE,
-	message = FALSE,
-	warning = FALSE,
-	cache = FALSE
-)
+```{r setup2, echo=FALSE, cache=FALSE}
+library(tidyverse)
+
 # Get the Data
 
 marbles <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-06-02/marbles.csv')
-
-# Or read in with tidytuesdayR package (https://github.com/thebioengineer/tidytuesdayR)
-
-# Either ISO-8601 date or year/week works!
-
-# Install via devtools::install_github("thebioengineer/tidytuesdayR")
-
-tuesdata <- tidytuesdayR::tt_load('2020-06-02')
-tuesdata <- tidytuesdayR::tt_load(2020, week = 23)
-
-
-marbles <- tuesdata$marbles
 ```
 
-
-```{r data cleaning, echo=FALSE, message=FALSE, warning=FALSE}
-#library(tidyverse)
-#library(skimr)
-#library(janitor)
-
-
-#marbles <- read_csv("marbles.csv") %>% 
- #janitor::clean_names() %>% 
-  #select(-host)
-
-#skimr::skim(marbles)
-
-#marbles %>% 
- # write_csv("marbles.csv")
-
-```
 # Einleitung
+![](Marble_Races.jpg)
+Die Daten dieser Woche stammen von Jelle's Marble Runs mit freundlicher Genehmigung von Randy Olson.
+Randy's Blogpost:
+
+> Jelle's Marble Runs begann 2006 als schrulliger YouTube-Kanal und hat die Kunst des Murmelrennens so verfeinert, dass viele - darunter auch Sponsor John Oliver von Last Week Tonight - Murmelrennen als legitimen Anwärter auf das nationale Sport-Rampenlicht betrachten.
+
 Die Daten stammen aus dem TidyTuesday Datensatz vom 06.02.2020. Es wurden die Namen der Murmeln und der Teams, die Durchschnittszeiten pro Runde, die Punkte oder die Streckenlänge gesammelt. 
 Die Punkte hängen nicht nur davon ab, wie schnell eine Murmel die Strecke zurückgelegt hat.
 
@@ -84,16 +50,16 @@ Quelle: [Tidy Tuesday](https://github.com/rfordatascience/tidytuesday/blob/maste
 
 # Daten
 
+In Summe wurden insgesammt `r sum(marbles$track_length_m)` Meilen Strecke von den Murmeln zurückgelegt.
 
-In Summe wurden r track_length_m %>% count() %>% pull(n) von den Murmeln zurückgelegt.
 Die Teams mit den meisten Punkten sind:
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+```{r estimatetop20}
 
-  sum_df <- marbles %>%
-filter(!is.na(points)) %>%
-group_by(team_name, time_s, track_length_m, number_laps, avg_time_lap) %>%
-summarise(points = sum(points), na.rm = T)
+sum_df <- marbles %>%
+  filter(!is.na(points)) %>%
+  group_by(team_name, time_s, track_length_m, number_laps, avg_time_lap) %>%
+  summarise(points = sum(points), na.rm = T)
 
   
 #sum_df %>%
